@@ -1,0 +1,389 @@
+#include <stdlib.h>
+#include <stdio.h>
+
+#define K KEY_TYPE
+#define V VALUE_TYPE
+
+#ifndef MAP_GENERIC_PRIVATE
+#define MAP_GENERIC_PRIVATE
+
+#define map_new_node(K, V) TOKENPASTE2(map_new_node, K, V)
+#define map_rotate_left(K, V) TOKENPASTE2(map_rotate_left, K, V)
+#define map_rotate_right(K, V) TOKENPASTE2(map_rotate_right, K, V)
+#define map_insert_rebalance(K, V) TOKENPASTE2(map_insert_rebalance, K, V)
+#define map_erase_rebalance(K, V) TOKENPASTE2(map_erase_rebalance, K, V)
+#define map_clear_helper(K, V) TOKENPASTE2(map_clear_helper, K, V)
+
+static int default_compare(const K left, const K right) {
+    return (left == right) ? 0 : (left < right) ? -1 : 1;
+}
+
+/* to avoid inclusion of <string.h> for memset */
+static void zero_init(void *ptr, size_t size) {
+    size_t i;
+    char *cptr = ptr;
+    for (i = 0; i < size; ++i)
+        cptr[i] = 0;
+}
+
+void swap_int(int *a, int *b) {
+    int c = *a;
+    *a = *b;
+    *b = c;
+}
+
+#endif
+
+void map_clear_helper(K, V)(map_node_t(K, V) *node) {
+    if (node != NULL) {
+        map_clear_helper(K, V)(node->left);
+        map_clear_helper(K, V)(node->right);
+        free(node);
+    }
+}
+
+void map_clear(K, V)(map_t(K, V) *this) {
+    map_clear_helper(K, V)(this->root);
+    this->root = NULL;
+}
+
+/* initialises the map with a NULL root and a default comparator if none is provided */
+void map_init(K, V)(map_t(K, V) *this, int (*compare)(const K a, const K b)) {
+    this->compare = (compare == NULL) ? default_compare : compare;
+    this->root = NULL;
+}
+
+void map_destroy(K, V)(map_t(K, V) *this) {
+    map_clear_helper(K, V)(this->root);
+    this->compare = NULL;
+    this->root = NULL;
+}
+
+map_t(K, V) *map_new(K, V)(int (*compare)(const K a, const K b)) {
+    map_t(K, V) *this = (map_t(K, V) *)malloc(sizeof(map_t(K, V)));
+    map_init(K, V)(this, compare);
+    return this;
+}
+
+void map_delete(K, V)(map_t(K, V) *this) {
+    map_destroy(K, V)(this);
+    free(this);
+}
+
+
+/* creates a new RED node with the give key and value */
+static map_node_t(K, V) *map_new_node(K, V)(K key, V value) {
+    map_node_t(K, V) *node = (map_node_t(K, V) *)malloc(sizeof(map_node_t(K, V)));
+    node->key = key;
+    node->value = value;
+    node->color = RED;
+    node->left = NULL;
+    node->right = NULL;
+    node->parent = NULL;
+    return node;
+}
+
+/* returns an iterator on the node with the given key, or NULL if none are found */
+map_iterator(K, V) map_find(K, V)(map_t(K, V) *this, K key) {
+    int compare_result;
+    map_node_t(K, V) *node = this->root;
+    while (node != NULL) {
+        compare_result = this->compare(key, node->key);
+        if (compare_result == 0) {
+            return node;
+        } else if (compare_result < 0) {
+            node = node->left;
+        } else {
+            node = node->right;
+        }
+    }
+    return node;
+}
+
+static void map_rotate_left(K, V)(map_t(K, V) *this, map_node_t(K, V) *node)
+{
+    map_node_t(K, V)* child = node->right;
+    node->right = child->left;
+    if (child->left != NULL)
+        child->left->parent = node;
+    child->parent = node->parent;
+
+    if (node == this->root)
+        this->root = child;
+    else if (node == node->parent->left)
+        node->parent->left = child;
+    else
+        node->parent->right = child;
+    child->left = node;
+    node->parent = child;
+}
+
+static void map_rotate_right(K, V)(map_t(K, V) *this, map_node_t(K, V) *node)
+{
+    map_node_t(K, V)* child = node->left;
+    node->left = child->right;
+    if (child->right != NULL)
+        child->right->parent = node;
+    child->parent = node->parent;
+
+    if (node == this->root)
+        this->root = child;
+    else if (node == node->parent->right)
+        node->parent->right = child;
+    else
+        node->parent->left = child;
+    child->right = node;
+    node->parent = child;
+}
+
+static void map_insert_rebalance(K, V)(map_t(K, V) *this, map_node_t(K, V) *node);
+
+void map_insert(K, V)(map_t(K, V) *this, K key, V value) {
+    map_find_or_create(K, V)(this, key)->value = value;
+}
+
+V map_at(K, V)(map_t(K, V) *this, K key) {
+    return &map_find_or_create(K, V)(this, key)->value;
+}
+
+map_iterator(K, V) map_find_or_create(K, V)(map_t(K, V) *this, K key) {
+    int compare_result;
+    map_node_t(K, V) *old_node = NULL;
+    map_node_t(K, V) **node_ptr = &this->root;
+    V value;
+    while (*node_ptr != NULL) {
+        old_node = *node_ptr;
+        compare_result = this->compare(key, (*node_ptr)->key);
+        if (compare_result == 0) {
+            return *node_ptr;
+        } else if (compare_result < 0) {
+            node_ptr = &(*node_ptr)->left;
+        } else {
+            node_ptr = &(*node_ptr)->right;
+        }
+
+    }
+    zero_init(&value, sizeof(V));
+    *node_ptr = map_new_node(K, V)(key, value);
+    (*node_ptr)->parent = old_node;
+    old_node = *node_ptr;
+    map_insert_rebalance(K, V)(this, *node_ptr);
+    return old_node;
+}
+
+void map_insert_rebalance(K, V)(map_t(K, V) *this, map_node_t(K, V) *node) {
+    map_node_t(K, V) *uncle;
+    node->color = RED;
+    while (node != this->root && node->parent->color == RED) {
+        if (node->parent == node->parent->parent->left) {
+            uncle = node->parent->parent->right;
+            if (uncle && uncle->color == RED) {
+                node->parent->color = BLACK;
+                uncle->color = BLACK;
+                node->parent->parent->color = RED;
+                node = node->parent->parent;
+            }
+            else {
+                if (node == node->parent->right) {
+                    node = node->parent;
+                    map_rotate_left(K, V)(this, node);
+                }
+                node->parent->color = BLACK;
+                node->parent->parent->color = RED;
+                map_rotate_right(K, V)(this, node->parent->parent);
+            }
+        }
+        else {
+            uncle = node->parent->parent->left;
+            if (uncle && uncle->color == RED) {
+                node->parent->color = BLACK;
+                uncle->color = BLACK;
+                node->parent->parent->color = RED;
+                node = node->parent->parent;
+            }
+            else {
+                if (node == node->parent->left) {
+                    node = node->parent;
+                    map_rotate_right(K, V)(this, node);
+                }
+                node->parent->color = BLACK;
+                node->parent->parent->color = RED;
+                map_rotate_left(K, V)(this, node->parent->parent);
+            }
+        }
+    }
+    this->root->color = BLACK;
+}
+
+map_node_t(K, V) *map_erase_rebalance(K, V)(map_t(K, V) *this, map_node_t(K, V) *node);
+
+void map_erase(K, V)(map_t(K, V) *this, K key) {
+    map_node_t(K, V) *node = map_find(K, V)(this, key);
+    if (node == NULL) return;
+    node = map_erase_rebalance(K, V)(this, node);
+    free(node);
+}
+
+map_node_t(K, V) *map_erase_rebalance(K, V)(map_t(K, V) *this, map_node_t(K, V) *z)
+{
+    map_node_t(K, V) *w;
+    map_node_t(K, V) *x = 0;
+    map_node_t(K, V) *y = z;
+    map_node_t(K, V) *x_parent = 0;
+    if (y->left == 0)
+        x = y->right;
+    else if (y->right == 0)
+        x = y->left;
+    else {
+        y = y->right;
+        while (y->left != 0)
+            y = y->left;
+        x = y->right;
+    }
+    if (y != z) {
+        z->left->parent = y;
+        y->left = z->left;
+        if (y != z->right) {
+            x_parent = y->parent;
+            if (x) x->parent = y->parent;
+            y->parent->left = x;
+            y->right = z->right;
+            z->right->parent = y;
+        }
+        else
+            x_parent = y;
+        if (this->root == z)
+            this->root = y;
+        else if (z->parent->left == z)
+            z->parent->left = y;
+        else
+            z->parent->right = y;
+        y->parent = z->parent;
+        swap_int(&y->color, &z->color);
+        y = z;
+    } else {
+        x_parent = y->parent;
+        if (x) x->parent = y->parent;
+        if (this->root == z)
+            this->root = x;
+        else if (z->parent->left == z)
+            z->parent->left = x;
+        else
+            z->parent->right = x;
+    }
+    if (y->color != RED) {
+        while (x != this->root && (x == 0 || x->color == BLACK))
+            if (x == x_parent->left) {
+                w = x_parent->right;
+                if (w->color == RED) {
+                    w->color = BLACK;
+                    x_parent->color = RED;
+                    map_rotate_left(K, V)(this, x_parent);
+                    w = x_parent->right;
+                }
+                if ((w->left == 0 ||
+                        w->left->color == BLACK) &&
+                        (w->right == 0 ||
+                         w->right->color == BLACK)) {
+                    w->color = RED;
+                    x = x_parent;
+                    x_parent = x_parent->parent;
+                } else {
+                    if (w->right == 0 ||
+                            w->right->color == BLACK) {
+                        if (w->left) w->left->color = BLACK;
+                        w->color = RED;
+                        map_rotate_right(K, V)(this, w);
+                        w = x_parent->right;
+                    }
+                    w->color = x_parent->color;
+                    x_parent->color = BLACK;
+                    if (w->right) w->right->color = BLACK;
+                    map_rotate_left(K, V)(this, x_parent);
+                    break;
+                }
+            } else {
+                w = x_parent->left;
+                if (w->color == RED) {
+                    w->color = BLACK;
+                    x_parent->color = RED;
+                    map_rotate_right(K, V)(this, x_parent);
+                    w = x_parent->left;
+                }
+                if ((w->right == 0 ||
+                        w->right->color == BLACK) &&
+                        (w->left == 0 ||
+                         w->left->color == BLACK)) {
+                    w->color = RED;
+                    x = x_parent;
+                    x_parent = x_parent->parent;
+                } else {
+                    if (w->left == 0 ||
+                            w->left->color == BLACK) {
+                        if (w->right) w->right->color = BLACK;
+                        w->color = RED;
+                        map_rotate_left(K, V)(this, w);
+                        w = x_parent->left;
+                    }
+                    w->color = x_parent->color;
+                    x_parent->color = BLACK;
+                    if (w->left) w->left->color = BLACK;
+                    map_rotate_right(K, V)(this, x_parent);
+                    break;
+                }
+            }
+        if (x) x->color = BLACK;
+    }
+    return y;
+}
+
+map_iterator(K, V) map_begin(K, V)(map_t(K, V) *this) {
+    map_iterator(K, V) iterator = this->root;
+    if (iterator != NULL)
+        while (iterator->left != NULL)
+            iterator = iterator->left;
+    return iterator;
+}
+
+map_iterator(K, V) map_reverse_begin(K, V)(map_t(K, V) *this) {
+    map_iterator(K, V) iterator = this->root;
+    if (iterator != NULL)
+        while (iterator->right != NULL)
+            iterator = iterator->right;
+    return iterator;
+}
+
+void map_itr_increment(K, V)(map_iterator(K, V) *this) {
+    map_node_t(K, V) *node = *this;
+    if (node->right != NULL) {
+        node = node->right;
+        while (node->left != NULL)
+            node = node->left;
+    } else {
+        node = node->parent;
+        while (node != NULL && *this == node->right) {
+            *this = node;
+            node = node->parent;
+        }
+    }
+    *this = node;
+}
+
+void map_itr_decrement(K, V)(map_iterator(K, V) *this) {
+    map_node_t(K, V) *node = *this;
+    if (node->left != NULL) {
+        node = node->left;
+        while (node->right != NULL)
+            node = node->right;
+    } else {
+        node = node->parent;
+        while (node != NULL && *this == node->left) {
+            *this = node;
+            node = node->parent;
+        }
+    }
+    *this = node;
+}
+
+#undef K
+#undef V

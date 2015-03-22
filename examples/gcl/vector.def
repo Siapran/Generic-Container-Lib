@@ -1,0 +1,76 @@
+#include <stdlib.h>
+
+TYPE vector_at(TYPE)(vector_t(TYPE) *this, size_t pos) {
+	/* check if the this needs to be resized */
+	if (this->size <= pos)
+		vector_resize(TYPE)(this, pos);
+	return &this->data[pos];
+}
+
+void vector_init(TYPE)(vector_t(TYPE) *this, size_t size) {
+	/* initialize the this */
+	this->size = size;
+	this->capacity = 0;
+	this->data = NULL;
+
+	/* reserve space for data */
+	vector_reserve(TYPE)(this, size);
+}
+
+void vector_destroy(TYPE)(vector_t(TYPE) *this) {
+	free(this->data);
+	this->size = 0;
+	this->capacity = 0;
+	this->data = NULL;
+}
+
+vector_t(TYPE) *vector_new(TYPE)(size_t size) {
+	vector_t(TYPE) *this = malloc(sizeof(vector_t(TYPE)));
+	vector_init(TYPE)(this, size);
+	return this;
+}
+
+void vector_delete(TYPE)(vector_t(TYPE) *this) {
+	vector_destroy(TYPE)(this);
+	free(this);
+}
+
+void vector_reserve(TYPE)(vector_t(TYPE) *this, size_t size) {
+	/* get the apropriate capacity */
+	size_t capacity = 1;
+	while (capacity < size) capacity *= 2;
+	if (size == 0) capacity = 0;
+
+	/* if new capacity different from old capacity */
+	if (capacity != this->capacity) {
+		this->capacity = capacity;
+		if (size == 0) {
+			/* free the data */
+			free(this->data);
+			this->data = NULL;
+		} else {
+			/* reallocate the data */
+			this->data = realloc(this->data, this->capacity * sizeof(TYPE));
+		}
+	}
+}
+
+void vector_resize(TYPE)(vector_t(TYPE) *this, size_t size) {
+	this->size = size;
+	vector_reserve(TYPE)(this, size);
+}
+
+void vector_push_back(TYPE)(vector_t(TYPE) *this, TYPE value) {
+	/* check if reallocation is needed */
+	if (this->size >= this->capacity) {
+		if (this->capacity == 0) this->capacity = 1;
+		else this->capacity *= 2;
+		this->data = realloc(this->data, this->capacity * sizeof(TYPE));
+	}
+	/* push value */
+	this->data[this->size++] = value;
+}
+
+TYPE vector_pop_back(TYPE)(vector_t(TYPE) *this) {
+	return this->data[--this->size];
+}
