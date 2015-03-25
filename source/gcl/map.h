@@ -48,18 +48,18 @@ typedef enum map_node_color { RED, BLACK } map_node_color;
 #endif
 
 typedef struct map_node_t(K, V) {
-    K key;
-    V value;
-    struct map_node_t(K, V) *left;
-    struct map_node_t(K, V) *right;
-    struct map_node_t(K, V) *parent;
-    int color;
+	K key;
+	V value;
+	struct map_node_t(K, V) *left;
+	struct map_node_t(K, V) *right;
+	struct map_node_t(K, V) *parent;
+	int color;
 } map_node_t(K, V);
 
 typedef struct map_t(K, V) {
-    /* compare(a,b) should return 1 if *a > *b, -1 if *a < *b, and 0 otherwise */
-    int (*compare)(const K a, const K b);
-    map_node_t(K, V) *root;
+	/* compare(a,b) should return 1 if *a > *b, -1 if *a < *b, and 0 otherwise */
+	int (*compare)(const K a, const K b);
+	map_node_t(K, V) *root;
 } map_t(K, V);
 
 typedef map_node_t(K, V)* map_iterator(K, V);

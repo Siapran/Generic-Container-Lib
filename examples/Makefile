@@ -1,14 +1,12 @@
 CC=gcc
 CFLAGS=-W -Wall -std=c89
 LDFLAGS=
-EXEC=main
-SRC= $(wildcard *.c)
-OBJ= $(SRC:.c=.o)
+EXEC= word_count stack
 
 
 all: $(EXEC)
 
-main: $(OBJ)
+$(EXEC): %: %.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c
@@ -17,9 +15,12 @@ main: $(OBJ)
 .PHONY: clean rmproper
 
 clean:
-	@rm -rf $(OBJ)
+	@rm -f *.o *~
 
 rmproper: clean
-	@rm -rf $(EXEC)
+	@rm -f $(EXEC)
 
-main.o: gcl.h gcl/vector.h gcl/vector.def gcl/map.h gcl/map.def
+stack.o: gcl.h gcl/vector.h gcl/vector.def gcl/map.h
+stack.o: gcl/map.def gcl/deque.h gcl/deque.def
+word_count.o: gcl.h gcl/vector.h
+word_count.o: gcl/vector.def gcl/map.h gcl/map.def gcl/deque.h gcl/deque.def

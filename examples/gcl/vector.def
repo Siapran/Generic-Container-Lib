@@ -25,7 +25,7 @@ void vector_destroy(TYPE)(vector_t(TYPE) *this) {
 }
 
 vector_t(TYPE) *vector_new(TYPE)(size_t size) {
-	vector_t(TYPE) *this = malloc(sizeof(vector_t(TYPE)));
+	vector_t(TYPE) *this = (vector_t(TYPE) *) malloc(sizeof(vector_t(TYPE)));
 	vector_init(TYPE)(this, size);
 	return this;
 }
@@ -50,7 +50,7 @@ void vector_reserve(TYPE)(vector_t(TYPE) *this, size_t size) {
 			this->data = NULL;
 		} else {
 			/* reallocate the data */
-			this->data = realloc(this->data, this->capacity * sizeof(TYPE));
+			this->data = (TYPE *) realloc(this->data, this->capacity * sizeof(TYPE));
 		}
 	}
 }
@@ -65,7 +65,7 @@ void vector_push_back(TYPE)(vector_t(TYPE) *this, TYPE value) {
 	if (this->size >= this->capacity) {
 		if (this->capacity == 0) this->capacity = 1;
 		else this->capacity *= 2;
-		this->data = realloc(this->data, this->capacity * sizeof(TYPE));
+		this->data = (TYPE *) realloc(this->data, this->capacity * sizeof(TYPE));
 	}
 	/* push value */
 	this->data[this->size++] = value;

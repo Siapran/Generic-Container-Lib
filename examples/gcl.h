@@ -15,35 +15,9 @@ typedef const char* str;
 #undef KEY_TYPE
 #undef VALUE_TYPE
 
-/* a vector of ints */
-/*
 #define TYPE int
-#include "gcl/vector.h"
-#include "gcl/vector.def"
+#include "gcl/deque.h"
+#include "gcl/deque.def"
 #undef TYPE
- */
-
-/* A map of ints indexed by chars */
-/*
-#define KEY_TYPE char
-#define VALUE_TYPE int
-#include "gcl/map.h"
-#include "gcl/map.def"
-#undef KEY_TYPE
-#undef VALUE_TYPE
- */
-
-/* A vector of a custom structure */
-/*
-typedef struct my_struct {
-	int foo;
-	float bar;
-} my_struct;
-
-#define TYPE my_struct
-#include "gcl/vector.h"
-#include "gcl/vector.def"
-#undef TYPE
- */
 
 #endif
