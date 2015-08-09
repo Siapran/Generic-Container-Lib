@@ -7,16 +7,12 @@
 #ifndef MAP_GENERIC_PRIVATE
 #define MAP_GENERIC_PRIVATE
 
-#define map_new_node(K, V) TOKENPASTE2(map_new_node, K, V)
+#define map_node_new(K, V) TOKENPASTE2(map_node_new, K, V)
 #define map_rotate_left(K, V) TOKENPASTE2(map_rotate_left, K, V)
 #define map_rotate_right(K, V) TOKENPASTE2(map_rotate_right, K, V)
 #define map_insert_rebalance(K, V) TOKENPASTE2(map_insert_rebalance, K, V)
 #define map_erase_rebalance(K, V) TOKENPASTE2(map_erase_rebalance, K, V)
 #define map_clear_helper(K, V) TOKENPASTE2(map_clear_helper, K, V)
-
-static int default_compare(const K left, const K right) {
-    return (left == right) ? 0 : (left < right) ? -1 : 1;
-}
 
 /* to avoid inclusion of <string.h> for memset */
 static void zero_init(void *ptr, size_t size) {
@@ -33,6 +29,10 @@ void swap_int(int *a, int *b) {
 }
 
 #endif
+
+static int default_compare(const K left, const K right) {
+    return (left == right) ? 0 : (left < right) ? -1 : 1;
+}
 
 void map_clear_helper(K, V)(map_node_t(K, V) *node) {
     if (node != NULL) {
@@ -72,7 +72,7 @@ void map_delete(K, V)(map_t(K, V) *this) {
 
 
 /* creates a new RED node with the give key and value */
-static map_node_t(K, V) *map_new_node(K, V)(K key, V value) {
+static map_node_t(K, V) *map_node_new(K, V)(K key, V value) {
     map_node_t(K, V) *node = (map_node_t(K, V) *)malloc(sizeof(map_node_t(K, V)));
     node->key = key;
     node->value = value;
@@ -164,7 +164,7 @@ map_iterator(K, V) map_find_or_create(K, V)(map_t(K, V) *this, K key) {
 
     }
     zero_init(&value, sizeof(V));
-    *node_ptr = map_new_node(K, V)(key, value);
+    *node_ptr = map_node_new(K, V)(key, value);
     (*node_ptr)->parent = old_node;
     old_node = *node_ptr;
     map_insert_rebalance(K, V)(this, *node_ptr);

@@ -5,6 +5,9 @@
 #define MAP_GENERIC
 
 #ifndef TOKENPASTE2
+/**
+ * Concatenates A to B, used to generate suffixed function names
+ */
 #define TOKENPASTE2(x, y, z) x##_##y##_##z
 #endif
 

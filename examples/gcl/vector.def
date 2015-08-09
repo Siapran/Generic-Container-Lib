@@ -1,14 +1,28 @@
 #include <stdlib.h>
 
+#ifndef VECTOR_PRIVATE
+size_t next_pow2(size_t x) {
+	x -= 1;
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+	x |= x >> 16;
+	x += 1;
+	return x;
+}
+#define VECTOR_PRIVATE
+#endif
+
 TYPE vector_at(TYPE)(vector_t(TYPE) *this, size_t pos) {
-	/* check if the this needs to be resized */
+	/* check if the vector needs to be resized */
 	if (this->size <= pos)
 		vector_resize(TYPE)(this, pos);
 	return &this->data[pos];
 }
 
 void vector_init(TYPE)(vector_t(TYPE) *this, size_t size) {
-	/* initialize the this */
+	/* initialize the vector */
 	this->size = size;
 	this->capacity = 0;
 	this->data = NULL;
@@ -36,14 +50,10 @@ void vector_delete(TYPE)(vector_t(TYPE) *this) {
 }
 
 void vector_reserve(TYPE)(vector_t(TYPE) *this, size_t size) {
-	/* get the apropriate capacity */
-	size_t capacity = 1;
-	while (capacity < size) capacity *= 2;
-	if (size == 0) capacity = 0;
 
 	/* if new capacity different from old capacity */
-	if (capacity != this->capacity) {
-		this->capacity = capacity;
+	if (size != this->capacity) {
+		this->capacity = size;
 		if (size == 0) {
 			/* free the data */
 			free(this->data);
@@ -57,6 +67,7 @@ void vector_reserve(TYPE)(vector_t(TYPE) *this, size_t size) {
 
 void vector_resize(TYPE)(vector_t(TYPE) *this, size_t size) {
 	this->size = size;
+	if (size != 0) size = next_pow2(size);
 	vector_reserve(TYPE)(this, size);
 }
 

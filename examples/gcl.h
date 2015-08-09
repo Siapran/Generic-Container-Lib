@@ -16,8 +16,8 @@ typedef const char* str;
 #undef VALUE_TYPE
 
 #define TYPE int
-#include "gcl/deque.h"
-#include "gcl/deque.def"
+#include "gcl/list.h"
+#include "gcl/list.def"
 #undef TYPE
 
 #endif

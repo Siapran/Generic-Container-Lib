@@ -2,6 +2,9 @@
 #define VECTOR_GENERIC_MACROS
 
 #ifndef TOKENPASTE
+/**
+ * Concatenates A to B, used to generate suffixed function names
+ */
 #define TOKENPASTE(a, b) a##_##b
 #endif
 
@@ -39,20 +42,75 @@
 
 #endif
 
+/**
+ * the vector type stores:
+ * 		a logical size
+ * 		a real allocated size
+ * 		a pointer to the allocated data
+ */
 typedef struct vector_t(TYPE) {
     size_t size;
     size_t capacity;
     TYPE *data;
 } vector_t(TYPE);
 
+/**
+ * returns a pseudo-reference to the element of the vector at pos
+ * if pos is greater or equal than the vector size, the vector is resized to fit
+ * @param  this the vector
+ * @param  pos  the position/index
+ * @return      the a read-write reference to the element
+ */
 TYPE vector_at(TYPE)(vector_t(TYPE) *this, size_t pos);
 
+/**
+ * initializes the vector with a specified size
+ * @param this the vector
+ * @param size the size
+ */
 void vector_init(TYPE)(vector_t(TYPE) *this, size_t size);
-void vector_destroy(TYPE)(vector_t(TYPE) *this);
+/**
+ * contructor provided for convenience
+ */
 vector_t(TYPE) *vector_new(TYPE)(size_t size);
+
+/**
+ * destroys the vector, freeing all allocated memory
+ * @param this the vector
+ */
+void vector_destroy(TYPE)(vector_t(TYPE) *this);
+/**
+ * destructor provided for convenience
+ */
 void vector_delete(TYPE)(vector_t(TYPE) *this);
 
+/**
+ * pushes the value at the back of the vector
+ * increases the size by 1
+ * @param this  the vector
+ * @param value the value
+ */
 void vector_push_back(TYPE)(vector_t(TYPE) *this, TYPE value);
+/**
+ * pops an element from the back of the vector
+ * does NOT reallocate the vector
+ * @param  this the vector
+ * @return      the value of the popped element
+ */
 TYPE vector_pop_back(TYPE)(vector_t(TYPE) *this);
+/**
+ * resizes the vector to fit the size
+ * reallocates the vector if needed
+ * reallocation size is always a power of 2
+ * @param this the vector
+ * @param size the size
+ */
 void vector_resize(TYPE)(vector_t(TYPE) *this, size_t size);
+/**
+ * reallocates the vector to fit the size
+ * reallocates the vector if needed
+ * reallocation size is always a power of 2
+ * @param this the vector
+ * @param size the size
+ */
 void vector_reserve(TYPE)(vector_t(TYPE) *this, size_t size);
