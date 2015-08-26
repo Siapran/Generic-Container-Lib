@@ -1,0 +1,93 @@
+#include <stdlib.h>
+
+void list_init(TYPE)(list_t(TYPE) *this) {
+    this->size = 0;
+    this->front = NULL;
+    this->back = NULL;
+}
+
+void list_destroy(TYPE)(list_t(TYPE) *this) {
+    list_clear(TYPE)(this);
+}
+
+list_t(TYPE) *list_new(TYPE)() {
+    list_t(TYPE) *this = (list_t(TYPE) *) malloc(sizeof(list_t(TYPE)));
+    list_init(TYPE)(this);
+    return this;
+}
+
+void list_delete(TYPE)(list_t(TYPE) *this) {
+    list_destroy(TYPE)(this);
+    free(this);
+}
+
+void list_push_back(TYPE)(list_t(TYPE) *this, TYPE value) {
+    list_node_t(TYPE) *node = (list_node_t(TYPE) *) malloc(sizeof(list_node_t(TYPE)));
+    node->value = value;
+    node->next = NULL;
+    if (this->front == NULL) {
+        this->front = node;
+        node->prev = NULL;
+    } else {
+        node->prev = this->back;
+        this->back->next = node;
+    }
+    this->back = node;
+    ++this->size;
+}
+
+TYPE list_pop_back(TYPE)(list_t(TYPE) *this) {
+    list_node_t(TYPE) *node = this->back;
+    TYPE value = node->value;
+    if (node->prev == NULL) {
+        this->front = NULL;
+    } else {
+        node->prev->next = NULL;
+    }
+    this->back = node->prev;
+    free(node);
+    --this->size;
+    return value;
+}
+
+void list_push_front(TYPE)(list_t(TYPE) *this, TYPE value) {
+    list_node_t(TYPE) *node = (list_node_t(TYPE) *) malloc(sizeof(list_node_t(TYPE)));
+    node->value = value;
+    node->prev = NULL;
+    if (this->back == NULL) {
+        this->back = node;
+        node->next = NULL;
+    } else {
+        node->next = this->front;
+        this->front->prev = node;
+    }
+    this->front = node;
+    ++this->size;
+}
+
+TYPE list_pop_front(TYPE)(list_t(TYPE) *this) {
+    list_node_t(TYPE) *node = this->front;
+    TYPE value = node->value;
+    if (node->next == NULL) {
+        this->back = NULL;
+    } else {
+        node->next->prev = NULL;
+    }
+    this->front = node->next;
+    free(node);
+    --this->size;
+    return value;
+}
+
+void list_clear(TYPE)(list_t(TYPE) *this) {
+    list_node_t(TYPE) *node = this->front;
+    list_node_t(TYPE) *old_node;
+    while (node != NULL) {
+        old_node = node;
+        node = node->next;
+        free(old_node);
+    }
+    this->size = 0;
+    this->front = NULL;
+    this->back = NULL;
+}

@@ -1,0 +1,37 @@
+# GCL container convention
+
+## LIFETIME
+
+void container_init( container_t *this, ... )
+	initializes a previously allocated container
+	other memory allocations may occur
+	the container must be allocated beforehand
+
+container_t *container_new( ... )
+	allocates a container, initializes it via container_init, then returns a pointer to the resulting container
+
+void container_destroy( container_t *this )
+	prepares the container for safe deletion
+	the container is not deallocated
+	other memory deallocations may occur
+
+void container_delete( container_t *this )
+	destroys the container via container_destroy, then deallocates the container
+	do not use on statically allocated containers
+
+## ITERATORS
+
+an iterator should provide the following operations:
+	read at current position
+	write at current position
+	get next position
+	get previous position
+
+an iterator can provide these additionnal operations:
+	insert at current position
+	erase at current position
+
+## ACCESS
+
+
+

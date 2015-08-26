@@ -1,0 +1,22 @@
+CC=gcc
+CFLAGS=-W -Wall -std=c89
+LDFLAGS=
+EXEC= word_count stack
+
+
+all: $(EXEC)
+
+$(EXEC): %: %.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+%.o: %.c
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+.PHONY: clean rmproper
+
+clean:
+	@rm -f *.o *~
+
+rmproper: clean
+	@rm -f $(EXEC)
+# DO NOT DELETE

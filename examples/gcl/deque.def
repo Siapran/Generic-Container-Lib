@@ -1,0 +1,87 @@
+#include <stdlib.h>
+
+#ifndef VECTOR_PRIVATE
+size_t next_pow2(size_t x) {
+	x -= 1;
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+	x |= x >> 16;
+	x += 1;
+	return x;
+}
+#define VECTOR_PRIVATE
+#endif
+
+TYPE deque_at(TYPE)(deque_t(TYPE) *this, size_t pos) {
+	/* check if the deque needs to be resized */
+	if (this->size <= pos)
+		deque_resize(TYPE)(this, pos);
+	return &this->data[pos];
+}
+
+void deque_init(TYPE)(deque_t(TYPE) *this, size_t size) {
+	/* initialize the deque */
+	this->size = size;
+	this->capacity = 0;
+	this->data = NULL;
+
+	/* reserve space for data */
+	deque_reserve(TYPE)(this, size);
+}
+
+void deque_destroy(TYPE)(deque_t(TYPE) *this) {
+	free(this->data);
+	this->size = 0;
+	this->capacity = 0;
+	this->data = NULL;
+}
+
+deque_t(TYPE) *deque_new(TYPE)(size_t size) {
+	deque_t(TYPE) *this = (deque_t(TYPE) *) malloc(sizeof(deque_t(TYPE)));
+	deque_init(TYPE)(this, size);
+	return this;
+}
+
+void deque_delete(TYPE)(deque_t(TYPE) *this) {
+	deque_destroy(TYPE)(this);
+	free(this);
+}
+
+void deque_reserve(TYPE)(deque_t(TYPE) *this, size_t size) {
+
+	/* if new capacity different from old capacity */
+	if (size != this->capacity) {
+		this->capacity = size;
+		if (size == 0) {
+			/* free the data */
+			free(this->data);
+			this->data = NULL;
+		} else {
+			/* reallocate the data */
+			this->data = (TYPE *) realloc(this->data, this->capacity * sizeof(TYPE));
+		}
+	}
+}
+
+void deque_resize(TYPE)(deque_t(TYPE) *this, size_t size) {
+	this->size = size;
+	if (size != 0) size = next_pow2(size);
+	deque_reserve(TYPE)(this, size);
+}
+
+void deque_push_back(TYPE)(deque_t(TYPE) *this, TYPE value) {
+	/* check if reallocation is needed */
+	if (this->size >= this->capacity) {
+		if (this->capacity == 0) this->capacity = 1;
+		else this->capacity *= 2;
+		this->data = (TYPE *) realloc(this->data, this->capacity * sizeof(TYPE));
+	}
+	/* push value */
+	this->data[this->size++] = value;
+}
+
+TYPE deque_pop_back(TYPE)(deque_t(TYPE) *this) {
+	return this->data[--this->size];
+}
