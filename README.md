@@ -33,18 +33,19 @@ You can now use your instanciated container by including gcl.h.
 
 A parser is planned for future releases.
 
+## Features
 
-## Currently Implemented:
+### Currently Implemented:
 
 Vector: a container designed for efficient random access and growth.
 Map: a key-value associative container implemented as a RB tree.
 
-## In Progress
+### In Progress
 
 List: a linked list with efficient insertion and deletion from a known position.
 String: a refcounted string container and utility.
 
-## Planned
+### Planned
 
 Hashmap: a cache-friendly variant of Map.
 Set and Bag: sometimes you need them.
